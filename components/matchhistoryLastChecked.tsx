@@ -1,13 +1,14 @@
-import axios from "axios";
 import { formatRelative } from "date-fns";
-import react, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+
 const MatchHistoryLastChecked = () => {
   const [lastChecked, setLastChecked] = useState("Loading...");
 
   useEffect(() => {
     async function getLastMatchHistoryCheck() {
-      var response = await axios.get("/api/last-matchhistory-check");
-      var lastMatchHistoryCheckDate = new Date(response.data.date);
+      const response = await fetch("/api/last-matchhistory-check");
+      const data = await response.json();
+      const lastMatchHistoryCheckDate = new Date(data.date);
       setLastChecked(formatRelative(lastMatchHistoryCheckDate, new Date()));
     }
     getLastMatchHistoryCheck();

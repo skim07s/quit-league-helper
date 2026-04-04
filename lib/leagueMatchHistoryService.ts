@@ -1,25 +1,24 @@
-var axios = require("axios");
 import prisma from "./prisma";
 
-const checkIfUsersArePlaying = async () => {
-  const { LEAGUE_API_KEY } = process.env;
+const { LEAGUE_API_KEY } = process.env;
 
-  const axiosInstance = axios.create({
-    timeout: 1000,
-    headers: {
-      "X-Riot-Token": LEAGUE_API_KEY,
-    },
+const riotFetch = (url: string) =>
+  fetch(url, {
+    headers: { "X-Riot-Token": LEAGUE_API_KEY ?? "" },
+    signal: AbortSignal.timeout(5000),
   });
 
-  // only get users that have not been updated in the last 24 hours
-  // this is just in case the function times out in the middle of the run (max 10 seconds it can run)
-  // so this enables it to continually update the users that have not been updated yet
-  let currentDate = new Date();
-  currentDate.setHours(currentDate.getHours() - 24);
+const checkIfUsersArePlaying = async () => {
+  // Only get users that have not been updated in the last 24 hours.
+  // This handles the case where the function times out mid-run, allowing
+  // it to continue from where it left off on the next execution.
+  const cutoff = new Date();
+  cutoff.setHours(cutoff.getHours() - 24);
+
   const users = await prisma.user.findMany({
     where: {
       lastModifiedTime: {
-        lt: currentDate,
+        lt: cutoff,
       },
     },
     include: {
@@ -32,8 +31,9 @@ const checkIfUsersArePlaying = async () => {
   });
 
   for (const user of users) {
-    let latestDatePlayed = null;
-    let lastAccountPlayedOn = null;
+    let latestDatePlayed: Date | null = null;
+    let lastAccountPlayedOn: string | null = null;
+
     for (const userLeagueAccount of user.UserLeagueAccount) {
       if (userLeagueAccount.LeagueAccount.isInvalid) {
         continue;
@@ -42,88 +42,99 @@ const checkIfUsersArePlaying = async () => {
       const summonerName = userLeagueAccount.LeagueAccount.summonerName;
       let accountPuuid = userLeagueAccount.LeagueAccount.puuid;
 
-      // if this is null than it is a recenetly added accounta and we don't have the puuid for it yet
       if (accountPuuid == null) {
         try {
-          // `data is in response.data.puuid`
-          var URI = encodeURI(
+          const uri = encodeURI(
             "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" +
               summonerName
           );
-
-          const summonerAccountInformation = await axiosInstance.get(URI);
-          accountPuuid = summonerAccountInformation.data.puuid;
+          const summonerRes = await riotFetch(uri);
+          if (!summonerRes.ok) {
+            if (summonerRes.status === 404) {
+              console.log(
+                `[INFO] Setting ${summonerName} to isInvalid — summoner name does not exist`
+              );
+              await prisma.leagueAccount.update({
+                where: { id: userLeagueAccount.LeagueAccount.id },
+                data: { isInvalid: true },
+              });
+            } else {
+              console.log(
+                `[WARNING] Could not get summoner puuid for ${summonerName}. Status: ${summonerRes.status}`
+              );
+            }
+            continue;
+          }
+          const summonerData = await summonerRes.json();
+          accountPuuid = summonerData.puuid;
           await prisma.leagueAccount.update({
-            where: {
-              id: userLeagueAccount.LeagueAccount.id,
-            },
-            data: {
-              puuid: accountPuuid,
-            },
+            where: { id: userLeagueAccount.LeagueAccount.id },
+            data: { puuid: accountPuuid },
           });
         } catch (error) {
           console.log(
-            `[WARNING] Could not get summoner puuid through riot api for summonername: ${summonerName}. Status code: ${error?.response?.status}`
+            `[WARNING] Could not reach Riot API for summoner ${summonerName}:`,
+            error
           );
-          if (error?.response?.status === 404) {
-            console.log(
-              `[INFO] Setting ${summonerName} to be isInvalid because the summoner name does not exist`
-            );
-            await prisma.leagueAccount.update({
-              where: {
-                id: userLeagueAccount.LeagueAccount.id,
-              },
-              data: {
-                isInvalid: true,
-              },
-            });
-          }
+          continue;
         }
       }
-      let lastGameOnAccount: Date;
+
+      let lastGameOnAccount: Date | null = null;
       try {
-        const latestMatchesResponse = await axiosInstance.get(
+        const matchListRes = await riotFetch(
           `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${accountPuuid}/ids?start=0&count=20`
         );
-        const lastMatchId = latestMatchesResponse.data[0];
-        const latestMatchData = await axiosInstance.get(
+        if (!matchListRes.ok) {
+          if (matchListRes.status === 404) {
+            console.log(
+              `[INFO] Setting ${summonerName} to isInvalid — no match history`
+            );
+            await prisma.leagueAccount.update({
+              where: { id: userLeagueAccount.LeagueAccount.id },
+              data: { isInvalid: true },
+            });
+          } else {
+            console.log(
+              `[WARNING] Could not get match list for ${summonerName}. Status: ${matchListRes.status}`
+            );
+          }
+          continue;
+        }
+        const matchIds: string[] = await matchListRes.json();
+        const lastMatchId = matchIds[0];
+
+        const matchRes = await riotFetch(
           `https://americas.api.riotgames.com/lol/match/v5/matches/${lastMatchId}`
         );
-
-        lastGameOnAccount = new Date(latestMatchData.data.info.gameCreation);
+        if (!matchRes.ok) {
+          console.log(
+            `[WARNING] Could not get match data for ${summonerName}. Status: ${matchRes.status}`
+          );
+          continue;
+        }
+        const matchData = await matchRes.json();
+        lastGameOnAccount = new Date(matchData.info.gameCreation);
       } catch (error) {
         console.log(
-          `[WARNING] could not get summoner match history through riot api for summonerName: ${summonerName}. Status code: ${error?.response?.status}`
+          `[WARNING] Could not get match history for ${summonerName}:`,
+          error
         );
-
-        if (error?.response?.status === 404) {
-          console.log(
-            `[INFO] Setting ${summonerName} to be isInvalid because they don't have any matches in their match history`
-          );
-          await prisma.leagueAccount.update({
-            where: {
-              id: userLeagueAccount.LeagueAccount.id,
-            },
-            data: {
-              isInvalid: true,
-            },
-          });
-        }
+        continue;
       }
 
       if (lastGameOnAccount == null) {
         continue;
       }
 
-      if (lastGameOnAccount > latestDatePlayed || latestDatePlayed === null) {
+      if (latestDatePlayed === null || lastGameOnAccount > latestDatePlayed) {
         latestDatePlayed = lastGameOnAccount;
-        lastAccountPlayedOn = userLeagueAccount.LeagueAccount.summonerName;
+        lastAccountPlayedOn = summonerName;
       }
     }
 
-    // if the all the account names are invalid or something we want to exit early
     if (latestDatePlayed === null) {
-      `[INFO] User: ${user.name} does not have a valid account.`;
+      console.log(`[INFO] User: ${user.name} does not have a valid account.`);
       continue;
     }
 
@@ -131,17 +142,15 @@ const checkIfUsersArePlaying = async () => {
       `[INFO] User: ${user.name} played their last game on ${latestDatePlayed} (with ${lastAccountPlayedOn}).`
     );
 
-    // To calculate the time difference of two dates
-    var differenceInTime = new Date().getTime() - latestDatePlayed.getTime();
+    const differenceInTime = new Date().getTime() - latestDatePlayed.getTime();
+    const daysSinceLastGame = Math.floor(
+      differenceInTime / (1000 * 3600 * 24)
+    );
+    const longestStreakForUser = Math.max(
+      daysSinceLastGame,
+      user.longestStreak
+    );
 
-    // To calculate the no. of days between two dates
-    let daysSinceLastGame = differenceInTime / (1000 * 3600 * 24);
-    daysSinceLastGame = Math.floor(daysSinceLastGame);
-
-    var longestStreakForUser = user.longestStreak;
-    if (daysSinceLastGame > longestStreakForUser) {
-      longestStreakForUser = daysSinceLastGame;
-    }
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -151,7 +160,7 @@ const checkIfUsersArePlaying = async () => {
       },
     });
   }
-  // all rows defaulted
+
   await prisma.matchHistoryServiceAudit.create({
     data: {},
   });

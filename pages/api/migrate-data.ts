@@ -1,16 +1,16 @@
-/* eslint-disable import/no-anonymous-default-export */
 import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../../lib/prisma";
 
 // this is a temp route for a data migration
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const prisma = new PrismaClient();
-
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const users = await prisma.user.findMany({});
   for (const user of users) {
     for (const summonerName of user.summonerNames) {
       let leagueAccount = null;
-      let existingLeagueAccounts = await prisma.leagueAccount.findMany({
+      const existingLeagueAccounts = await prisma.leagueAccount.findMany({
         where: {
           summonerName: summonerName,
         },
@@ -25,7 +25,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         });
       }
 
-      // todo: create leageue user
       await prisma.userLeagueAccount.create({
         data: {
           leagueAccountId: leagueAccount.id,
@@ -36,4 +35,4 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   return res.json({ status: "success" });
-};
+}

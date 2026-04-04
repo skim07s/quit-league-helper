@@ -1,44 +1,49 @@
 import Head from "next/head";
-import React, { useState } from "react";
-import OutlinedInput from "@material-ui/core/OutlinedInput";
-import InputLabel from "@material-ui/core/InputLabel";
-import FormControl from "@material-ui/core/FormControl";
-import Button from "@material-ui/core/Button";
-import axios from "axios";
-import { Alert, AlertTitle } from "@material-ui/lab";
-import ButtonAppBar from "../components/appBar";
+import { useState } from "react";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
 
 const Home = () => {
   const [name, setName] = useState("");
   const [summonerNames, setSummonerNames] = useState([""]);
   const [isLoading, setIsLoading] = useState(false);
-  const [invalidSummonerNames, setInvalidSummonerNames] = useState([]);
+  const [invalidSummonerNames, setInvalidSummonerNames] = useState<string[]>(
+    []
+  );
 
   const handleSummonerNameChange = (i: number, summonerName: string) => {
-    let newSummerNames = [...summonerNames];
-    newSummerNames[i] = summonerName;
-    setSummonerNames(newSummerNames);
+    const newSummonerNames = [...summonerNames];
+    newSummonerNames[i] = summonerName;
+    setSummonerNames(newSummonerNames);
   };
 
   const handleAddAccount = () => {
-    setSummonerNames((summonerNames) => [...summonerNames, ""]);
+    setSummonerNames((prev) => [...prev, ""]);
   };
 
   const handleSignupPress = async () => {
     setIsLoading(true);
-    const summonerNamesToUse = summonerNames.filter((x) => x.trim() != "");
+    const summonerNamesToUse = summonerNames.filter((x) => x.trim() !== "");
     try {
-      const response = await axios.post("/api/signup", {
-        name,
-        summonerNames: summonerNamesToUse,
+      const response = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, summonerNames: summonerNamesToUse }),
       });
-      setInvalidSummonerNames([]);
-      window.location.href = "/global-leaderboard";
-    } catch (error) {
-      console.error(error.response);
-      if (error.response.data.invalidSummonerNames) {
-        setInvalidSummonerNames(error.response.data.invalidSummonerNames);
+
+      if (!response.ok) {
+        const data = await response.json();
+        if (data.invalidSummonerNames) {
+          setInvalidSummonerNames(data.invalidSummonerNames);
+        }
+      } else {
+        setInvalidSummonerNames([]);
+        window.location.href = "/global-leaderboard";
       }
+    } catch (error) {
+      console.error(error);
     }
 
     setIsLoading(false);
@@ -63,34 +68,26 @@ const Home = () => {
           friends for the longest streak.
         </h3>
 
-        <FormControl fullWidth variant="outlined">
-          <InputLabel htmlFor="outlined-adornment-hourly">Your Name</InputLabel>
-          <OutlinedInput
-            id="outlined-adornment-hourly"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            labelWidth={77}
-          />
-        </FormControl>
+        <TextField
+          label="Your Name"
+          variant="outlined"
+          fullWidth
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
         {summonerNames.map((summonerName, i) => (
-          <FormControl
-            fullWidth
-            variant="outlined"
-            style={{ marginTop: 20 }}
+          <TextField
             key={i}
-          >
-            <InputLabel htmlFor="outlined-adornment-annual">
-              Summoner Name
-            </InputLabel>
-            <OutlinedInput
-              id="outlined-adornment-annual"
-              value={summonerName}
-              onChange={(e) => handleSummonerNameChange(i, e.target.value)}
-              labelWidth={125}
-            />
-          </FormControl>
+            label="Summoner Name"
+            variant="outlined"
+            fullWidth
+            style={{ marginTop: 20 }}
+            value={summonerName}
+            onChange={(e) => handleSummonerNameChange(i, e.target.value)}
+          />
         ))}
+
         <Button
           color="primary"
           onClick={handleAddAccount}
@@ -106,8 +103,8 @@ const Home = () => {
         {invalidSummonerNames.length > 0 && (
           <Alert severity="error">
             <AlertTitle>Invalid Summoner Names</AlertTitle>
-            {invalidSummonerNames.map((name) => (
-              <p key={name}>{name}</p>
+            {invalidSummonerNames.map((n) => (
+              <p key={n}>{n}</p>
             ))}
           </Alert>
         )}
@@ -119,7 +116,7 @@ const Home = () => {
           style={{ marginTop: 15 }}
           onClick={handleSignupPress}
           disabled={
-            summonerNames.filter((x) => x.trim() != "").length === 0 ||
+            summonerNames.filter((x) => x.trim() !== "").length === 0 ||
             name === ""
           }
         >
@@ -129,13 +126,11 @@ const Home = () => {
 
       <style jsx>{`
         .container {
-          margin-right: auto; /* 1 */
-          margin-left: auto; /* 1 */
-
-          max-width: 960px; /* 2 */
-
-          padding-right: 10px; /* 3 */
-          padding-left: 10px; /* 3 */
+          margin-right: auto;
+          margin-left: auto;
+          max-width: 960px;
+          padding-right: 10px;
+          padding-left: 10px;
         }
 
         h1 {
@@ -155,7 +150,6 @@ const Home = () => {
 
         h2 {
           font-size: 20px;
-          font-weight: ;
         }
 
         @media only screen and (max-width: 600px) {
@@ -169,7 +163,7 @@ const Home = () => {
 
         a {
           color: white;
-          text-decoration: none !important; /* no underline */
+          text-decoration: none !important;
         }
       `}</style>
 

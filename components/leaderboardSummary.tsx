@@ -1,29 +1,28 @@
-import { Button, Link, Paper } from "@material-ui/core";
-import { CustomLeaderboard, User, UserCustomLeaderboard } from "@prisma/client";
-import React from "react";
+import { Button, Link, Paper } from "@mui/material";
+import {
+  CustomLeaderboard,
+  User,
+  UserCustomLeaderboard,
+} from "@prisma/client";
 
 interface Props {
   leaderboard: CustomLeaderboard & {
-    UserCustomLeaderboard: UserCustomLeaderboard &
-      {
-        user: User;
-      }[];
+    UserCustomLeaderboard: (UserCustomLeaderboard & {
+      user: User;
+    })[];
   };
 }
 
-function LeaderboardSummary(props: Props) {
-  const { leaderboard } = props;
-
+function LeaderboardSummary({ leaderboard }: Props) {
   let currentLeader: User | null = null;
-  leaderboard.UserCustomLeaderboard.forEach((item) => {
-    if (currentLeader == null) {
+  for (const item of leaderboard.UserCustomLeaderboard) {
+    if (
+      currentLeader == null ||
+      item.user.currentStreak > currentLeader.currentStreak
+    ) {
       currentLeader = item.user;
-      return;
     }
-    if (currentLeader.currentStreak < item.user.currentStreak) {
-      currentLeader = item.user;
-    }
-  });
+  }
 
   return (
     <Paper elevation={3}>
@@ -32,7 +31,7 @@ function LeaderboardSummary(props: Props) {
         <p className="summonerNames">
           Members:{" "}
           {leaderboard.UserCustomLeaderboard.map((item, index) => {
-            if (index == leaderboard.UserCustomLeaderboard.length - 1) {
+            if (index === leaderboard.UserCustomLeaderboard.length - 1) {
               return item.user.name;
             }
             return item.user.name + ", ";
@@ -46,7 +45,7 @@ function LeaderboardSummary(props: Props) {
 
         <Link href={"/leaderboard/" + encodeURI(leaderboard.name)}>
           <Button
-            color="default"
+            color="inherit"
             style={{ marginBottom: 0, marginTop: 10 }}
             size="small"
             variant="outlined"

@@ -1,51 +1,58 @@
 import Head from "next/head";
-import React, { useState } from "react";
-import TextField from "@material-ui/core/TextField";
-import { Button } from "@material-ui/core";
-import { Alert, AlertTitle } from "@material-ui/lab";
-import axios from "axios";
+import { useState } from "react";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
 
 function BuildCustomLeaderboard() {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [summonerNames, setSummonerNames] = useState(["", ""]);
-  const [summonerNamesNotFound, setSummonerNamesNotFound] = useState([]);
-  const [shouldShowLeadboardNameError, setShouldShowLeadboardNameError] =
+  const [summonerNamesNotFound, setSummonerNamesNotFound] = useState<string[]>(
+    []
+  );
+  const [shouldShowLeaderboardNameError, setShouldShowLeaderboardNameError] =
     useState(false);
 
   const handleCreateButtonPress = async () => {
     setIsLoading(true);
-    const summonerNamesToUse = summonerNames.filter((x) => x.trim() != "");
+    const summonerNamesToUse = summonerNames.filter((x) => x.trim() !== "");
     try {
-      const response = await axios.post("/api/leaderboard", {
-        name,
-        summonerNames: summonerNamesToUse,
+      const response = await fetch("/api/leaderboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, summonerNames: summonerNamesToUse }),
       });
-      setSummonerNamesNotFound([]);
-      setShouldShowLeadboardNameError(false);
 
-      window.location.href = "/leaderboard/" + encodeURI(name);
+      if (!response.ok) {
+        const data = await response.json();
+        if (response.status === 409) {
+          setShouldShowLeaderboardNameError(true);
+        }
+        if (data.summonerNamesNotFound) {
+          setSummonerNamesNotFound(data.summonerNamesNotFound);
+        }
+      } else {
+        setSummonerNamesNotFound([]);
+        setShouldShowLeaderboardNameError(false);
+        window.location.href = "/leaderboard/" + encodeURI(name);
+      }
     } catch (error) {
-      console.error(error.response);
-      if (error.response.status === 409) {
-        setShouldShowLeadboardNameError(true);
-      }
-      if (error.response.data.summonerNamesNotFound) {
-        setSummonerNamesNotFound(error.response.data.summonerNamesNotFound);
-      }
+      console.error(error);
     }
 
     setIsLoading(false);
   };
 
   const handleAddUser = () => {
-    setSummonerNames((summonerNames) => [...summonerNames, ""]);
+    setSummonerNames((prev) => [...prev, ""]);
   };
 
   const handleSummonerNameChange = (i: number, summonerName: string) => {
-    let newSummerNames = [...summonerNames];
-    newSummerNames[i] = summonerName;
-    setSummonerNames(newSummerNames);
+    const newSummonerNames = [...summonerNames];
+    newSummonerNames[i] = summonerName;
+    setSummonerNames(newSummonerNames);
   };
 
   return (
@@ -60,7 +67,6 @@ function BuildCustomLeaderboard() {
           Build a custom leaderboard
         </h1>
         <TextField
-          id="outlined-basic"
           label="Leaderboard name"
           variant="outlined"
           value={name}
@@ -74,13 +80,13 @@ function BuildCustomLeaderboard() {
         </p>
         {summonerNames.map((summonerName, i) => (
           <TextField
+            key={i}
             label="Users summoner name"
             variant="outlined"
             value={summonerName}
             onChange={(e) => handleSummonerNameChange(i, e.target.value)}
             fullWidth
             style={{ maxWidth: 800, marginTop: 20 }}
-            key={i}
           />
         ))}
         <Button
@@ -95,15 +101,14 @@ function BuildCustomLeaderboard() {
             <AlertTitle>
               Could not find users that signed up the following summoner names:
             </AlertTitle>
-            {summonerNamesNotFound.map((name, i) => (
-              <p key={i}>{name}</p>
+            {summonerNamesNotFound.map((n, i) => (
+              <p key={i}>{n}</p>
             ))}
           </Alert>
         )}
-        ``
-        {shouldShowLeadboardNameError && (
+        {shouldShowLeaderboardNameError && (
           <Alert severity="error" style={{ backgroundColor: "rgb(37 11 10)" }}>
-            <AlertTitle>Leadboard already exists with this name</AlertTitle>
+            <AlertTitle>Leaderboard already exists with this name</AlertTitle>
           </Alert>
         )}
         <Button
@@ -123,13 +128,11 @@ function BuildCustomLeaderboard() {
 
       <style jsx>{`
         .container {
-          margin-right: auto; /* 1 */
-          margin-left: auto; /* 1 */
-
-          max-width: 960px; /* 2 */
-
-          padding-right: 10px; /* 3 */
-          padding-left: 10px; /* 3 */
+          margin-right: auto;
+          margin-left: auto;
+          max-width: 960px;
+          padding-right: 10px;
+          padding-left: 10px;
         }
 
         .sectionTitle {
@@ -145,7 +148,7 @@ function BuildCustomLeaderboard() {
 
         a {
           color: white !important;
-          text-decoration: none !important; /* no underline */
+          text-decoration: none !important;
         }
       `}</style>
     </div>

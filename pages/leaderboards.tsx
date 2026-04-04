@@ -1,16 +1,22 @@
 import Head from "next/head";
-import React, { useState } from "react";
+import { useState } from "react";
+import TextField from "@mui/material/TextField";
 import prisma from "../lib/prisma";
 import BuildLeaderboardButton from "../components/buildLeaderboardButton";
 import LeaderboardSummary from "../components/leaderboardSummary";
-import { TextField } from "@material-ui/core";
-//TODO: fix this any typ
+import { CustomLeaderboard, User, UserCustomLeaderboard } from "@prisma/client";
+
+type LeaderboardWithMembers = CustomLeaderboard & {
+  UserCustomLeaderboard: (UserCustomLeaderboard & {
+    user: User;
+  })[];
+};
+
 interface Props {
-  leaderboards: any[];
+  leaderboards: LeaderboardWithMembers[];
 }
 
-function Leaderboard(props: Props) {
-  const { leaderboards } = props;
+function Leaderboard({ leaderboards }: Props) {
   const [searchValue, setSearchValue] = useState("");
   const filteredLeaderboards = leaderboards.filter((leaderboard) =>
     leaderboard.name.toLowerCase().includes(searchValue.toLowerCase())
@@ -43,13 +49,11 @@ function Leaderboard(props: Props) {
 
       <style jsx>{`
         .container {
-          margin-right: auto; /* 1 */
-          margin-left: auto; /* 1 */
-
-          max-width: 960px; /* 2 */
-
-          padding-right: 10px; /* 3 */
-          padding-left: 10px; /* 3 */
+          margin-right: auto;
+          margin-left: auto;
+          max-width: 960px;
+          padding-right: 10px;
+          padding-left: 10px;
         }
 
         .sectionTitle {
@@ -65,7 +69,7 @@ function Leaderboard(props: Props) {
 
         a {
           color: white !important;
-          text-decoration: none !important; /* no underline */
+          text-decoration: none !important;
         }
         body {
           background-color: rgba(0, 0, 0, 1) !important;
@@ -97,7 +101,7 @@ export async function getStaticProps() {
   });
 
   return {
-    props: { leaderboards: leaderboards },
+    props: { leaderboards },
     revalidate: 1,
   };
 }

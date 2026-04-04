@@ -1,13 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../../lib/prisma";
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  // TODO: abstract validation to make this easier to read
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (
-    !req.body.hasOwnProperty("name") ||
+    !Object.prototype.hasOwnProperty.call(req.body, "name") ||
     req.body.name == null ||
-    req.body.name == "" ||
-    !req.body.hasOwnProperty("summonerNames") ||
+    req.body.name === "" ||
+    !Object.prototype.hasOwnProperty.call(req.body, "summonerNames") ||
     req.body.summonerNames == null
   ) {
     return res
@@ -15,21 +17,24 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       .json({ error: "name and summonerNames required in the body." });
   }
 
-  req.body.summonerNames = req.body.summonerNames.filter((x) => x.trim() != "");
-  if (req.body.summonerNames.length == 0) {
+  const summonerNames: string[] = (req.body.summonerNames as string[]).filter(
+    (x) => x.trim() !== ""
+  );
+  if (summonerNames.length === 0) {
     return res.status(400).json({
       error: "A valid list of summonerNames is required.",
     });
   }
 
-  let userIds: number[] = [];
-  let summonerNamesNotFound = [];
-  for (let summonnerName of req.body.summonerNames) {
-    console.log("looking for summoner name: ", summonnerName);
-    let user = await prisma.user.findFirst({
+  const userIds: number[] = [];
+  const summonerNamesNotFound: string[] = [];
+
+  for (const summonerName of summonerNames) {
+    console.log("looking for summoner name: ", summonerName);
+    const user = await prisma.user.findFirst({
       where: {
         summonerNames: {
-          has: summonnerName,
+          has: summonerName,
         },
       },
     });
@@ -37,7 +42,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     if (user != null) {
       userIds.push(+user.id);
     } else {
-      summonerNamesNotFound.push(summonnerName);
+      summonerNamesNotFound.push(summonerName);
     }
   }
 
@@ -47,11 +52,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       .json({ error: "Invalid summoner names.", summonerNamesNotFound });
   }
 
-  var numLeaderboardsAlreadyWithThisName = await prisma.customLeaderboard.count(
-    {
+  const numLeaderboardsAlreadyWithThisName =
+    await prisma.customLeaderboard.count({
       where: { name: req.body.name },
-    }
-  );
+    });
 
   if (numLeaderboardsAlreadyWithThisName !== 0) {
     return res
@@ -59,14 +63,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       .json({ error: "Leaderboard with that name already exists." });
   }
 
-  var newLeaderboard = await prisma.customLeaderboard.create({
+  const newLeaderboard = await prisma.customLeaderboard.create({
     data: {
       name: req.body.name,
       UserCustomLeaderboard: {
-        create: userIds.map((userId) => ({ userId: userId })),
+        create: userIds.map((userId) => ({ userId })),
       },
     },
   });
 
   return res.json({ newLeaderboard });
-};
+}

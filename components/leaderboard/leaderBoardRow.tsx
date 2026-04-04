@@ -1,14 +1,11 @@
-import { Paper } from "@material-ui/core";
+import { Paper } from "@mui/material";
 import { User } from "@prisma/client";
-import Head from "next/head";
-import React from "react";
 
 interface Props {
   user: User;
 }
-export default function LeaderBoardRow(props: Props) {
-  const { user } = props;
 
+export default function LeaderBoardRow({ user }: Props) {
   return (
     <Paper elevation={3}>
       <div className="section">
@@ -23,7 +20,7 @@ export default function LeaderBoardRow(props: Props) {
           Accounts:{" "}
           <strong>
             {user.summonerNames.map((name, index) => {
-              if (index == user.summonerNames.length - 1) {
+              if (index === user.summonerNames.length - 1) {
                 return name;
               }
               return name + ", ";

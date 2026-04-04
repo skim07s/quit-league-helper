@@ -1,26 +1,23 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
 import LeaderBoardRow from "../../components/leaderboard/leaderBoardRow";
-import React from "react";
 import Error from "next/error";
-import { Alert } from "@material-ui/lab";
 import { User } from "@prisma/client";
 import prisma from "../../lib/prisma";
-import checkUserMatchhistory from "../api/check-user-matchhistory";
 import MatchHistoryLastChecked from "../../components/matchhistoryLastChecked";
 
 interface Props {
-  users: User[];
+  users: User[] | null;
 }
 
-function Leaderboard(props: Props) {
+function Leaderboard({ users }: Props) {
   const router = useRouter();
   const { name } = router.query;
-  const { users } = props;
 
   if (users == null) {
     return <Error statusCode={404} />;
   }
+
   return (
     <div className="container">
       <Head>
@@ -40,13 +37,11 @@ function Leaderboard(props: Props) {
 
       <style jsx>{`
         .container {
-          margin-right: auto; /* 1 */
-          margin-left: auto; /* 1 */
-
-          max-width: 960px; /* 2 */
-
-          padding-right: 10px; /* 3 */
-          padding-left: 10px; /* 3 */
+          margin-right: auto;
+          margin-left: auto;
+          max-width: 960px;
+          padding-right: 10px;
+          padding-left: 10px;
         }
 
         .sectionTitle {
@@ -62,20 +57,20 @@ function Leaderboard(props: Props) {
 
         a {
           color: white !important;
-          text-decoration: none !important; /* no underline */
+          text-decoration: none !important;
         }
       `}</style>
     </div>
   );
 }
 
-export async function getServerSideProps(context: any) {
-  var name = context.params.name;
+export async function getServerSideProps(context: {
+  params: { name: string };
+}) {
+  const { name } = context.params;
 
-  let leaderboard = await prisma.customLeaderboard.findFirst({
-    where: {
-      name: name,
-    },
+  const leaderboard = await prisma.customLeaderboard.findFirst({
+    where: { name },
     select: {
       UserCustomLeaderboard: {
         select: {
@@ -85,13 +80,14 @@ export async function getServerSideProps(context: any) {
     },
   });
 
-  let users = leaderboard.UserCustomLeaderboard.map((item) => item.user);
+  if (!leaderboard) {
+    return { props: { users: null } };
+  }
 
+  const users = leaderboard.UserCustomLeaderboard.map((item) => item.user);
   users.sort((a, b) => b.currentStreak - a.currentStreak);
 
-  return {
-    props: { users: users },
-  };
+  return { props: { users } };
 }
 
 export default Leaderboard;
