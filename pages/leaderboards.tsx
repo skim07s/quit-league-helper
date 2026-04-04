@@ -1,5 +1,7 @@
 import Head from "next/head";
 import { useState } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import prisma from "../lib/prisma";
 import BuildLeaderboardButton from "../components/buildLeaderboardButton";
@@ -18,72 +20,62 @@ interface Props {
 
 function Leaderboard({ leaderboards }: Props) {
   const [searchValue, setSearchValue] = useState("");
-  const filteredLeaderboards = leaderboards.filter((leaderboard) =>
-    leaderboard.name.toLowerCase().includes(searchValue.toLowerCase())
+  const filteredLeaderboards = leaderboards.filter((lb) =>
+    lb.name.toLowerCase().includes(searchValue.toLowerCase())
   );
 
   return (
-    <div className="container">
+    <>
       <Head>
-        <title>Leaderboards</title>
+        <title>Leaderboards — Quit League</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main>
-        <h1 className="sectionTitle">Leaderboards</h1>
+      <Box
+        sx={{
+          maxWidth: 760,
+          mx: "auto",
+          px: { xs: 2, sm: 3 },
+          pt: 5,
+          pb: 8,
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 700, mb: 3, letterSpacing: "-0.03em" }}
+        >
+          Leaderboards
+        </Typography>
 
-        <BuildLeaderboardButton />
+        <Box sx={{ mb: 3 }}>
+          <BuildLeaderboardButton />
+        </Box>
 
         <TextField
           label="Search leaderboards"
-          variant="standard"
+          variant="outlined"
+          size="small"
+          fullWidth
           onChange={(e) => setSearchValue(e.target.value)}
-          style={{ marginTop: 0, paddingTop: 0, marginBottom: 10 }}
+          sx={{ mb: 3, maxWidth: 360 }}
         />
 
-        {!filteredLeaderboards.length && "No leaderboards found."}
+        {!filteredLeaderboards.length && (
+          <Typography sx={{ color: "text.secondary" }}>
+            No leaderboards found.
+          </Typography>
+        )}
         {filteredLeaderboards.map((leaderboard, i) => (
           <LeaderboardSummary leaderboard={leaderboard} key={i} />
         ))}
-      </main>
-
-      <style jsx>{`
-        .container {
-          margin-right: auto;
-          margin-left: auto;
-          max-width: 960px;
-          padding-right: 10px;
-          padding-left: 10px;
-        }
-
-        .sectionTitle {
-          font-size: 50px;
-          margin-bottom: 5px;
-        }
-
-        @media only screen and (max-width: 600px) {
-          .sectionTitle {
-            font-size: 35px;
-          }
-        }
-
-        a {
-          color: white !important;
-          text-decoration: none !important;
-        }
-        body {
-          background-color: rgba(0, 0, 0, 1) !important;
-        }
-      `}</style>
-    </div>
+      </Box>
+    </>
   );
 }
 
 export async function getStaticProps() {
   const leaderboards = await prisma.customLeaderboard.findMany({
-    orderBy: {
-      id: "desc",
-    },
+    orderBy: { id: "desc" },
     include: {
       UserCustomLeaderboard: {
         include: {

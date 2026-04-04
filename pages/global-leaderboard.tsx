@@ -1,6 +1,7 @@
 import Head from "next/head";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import LeaderBoardRow from "../components/leaderboard/leaderBoardRow";
-import React from "react";
 import prisma from "../lib/prisma";
 import { User } from "@prisma/client";
 import BuildLeaderboardButton from "../components/buildLeaderboardButton";
@@ -10,58 +11,42 @@ interface Props {
   topUsers: User[];
 }
 
-function Leaderboard(props: Props) {
-  const { topUsers } = props;
-
+function Leaderboard({ topUsers }: Props) {
   return (
-    <div className="container">
+    <>
       <Head>
-        <title>Leaderboard</title>
+        <title>Global Leaderboard — Quit League</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main>
-        <h1 className="sectionTitle">Global Leaderboard</h1>
-        <MatchHistoryLastChecked />
-        <BuildLeaderboardButton />
-        <br />
+      <Box
+        sx={{
+          maxWidth: 760,
+          mx: "auto",
+          px: { xs: 2, sm: 3 },
+          pt: 5,
+          pb: 8,
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 700, mb: 0.5, letterSpacing: "-0.03em" }}
+        >
+          Global Leaderboard
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+          <MatchHistoryLastChecked />
+        </Box>
 
-        {topUsers.map((user) => (
-          <LeaderBoardRow user={user} key={user.name} />
+        <Box sx={{ mb: 3 }}>
+          <BuildLeaderboardButton />
+        </Box>
+
+        {topUsers.map((user, index) => (
+          <LeaderBoardRow user={user} key={user.name} rank={index + 1} />
         ))}
-      </main>
-
-      <style jsx>{`
-        .container {
-          margin-right: auto; /* 1 */
-          margin-left: auto; /* 1 */
-
-          max-width: 960px; /* 2 */
-
-          padding-right: 10px; /* 3 */
-          padding-left: 10px; /* 3 */
-        }
-
-        .sectionTitle {
-          font-size: 50px;
-          margin-bottom: 5px;
-        }
-
-        @media only screen and (max-width: 600px) {
-          .sectionTitle {
-            font-size: 35px;
-          }
-        }
-
-        a {
-          color: white !important;
-          text-decoration: none !important; /* no underline */
-        }
-        body {
-          background-color: rgba(0, 0, 0, 1) !important;
-        }
-      `}</style>
-    </div>
+      </Box>
+    </>
   );
 }
 

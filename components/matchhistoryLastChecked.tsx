@@ -8,6 +8,10 @@ const MatchHistoryLastChecked = () => {
     async function getLastMatchHistoryCheck() {
       const response = await fetch("/api/last-matchhistory-check");
       const data = await response.json();
+      if (!data?.date) {
+        setLastChecked("Never");
+        return;
+      }
       const lastMatchHistoryCheckDate = new Date(data.date);
       setLastChecked(formatRelative(lastMatchHistoryCheckDate, new Date()));
     }

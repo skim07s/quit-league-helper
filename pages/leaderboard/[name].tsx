@@ -1,5 +1,7 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import LeaderBoardRow from "../../components/leaderboard/leaderBoardRow";
 import Error from "next/error";
 import { User } from "@prisma/client";
@@ -19,48 +21,36 @@ function Leaderboard({ users }: Props) {
   }
 
   return (
-    <div className="container">
+    <>
       <Head>
-        <title>{name}</title>
+        <title>{name} — Quit League</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main>
-        <h1 className="sectionTitle">{name}</h1>
-        <MatchHistoryLastChecked />
-        <br />
+      <Box
+        sx={{
+          maxWidth: 760,
+          mx: "auto",
+          px: { xs: 2, sm: 3 },
+          pt: 5,
+          pb: 8,
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 700, mb: 0.5, letterSpacing: "-0.03em" }}
+        >
+          {name}
+        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <MatchHistoryLastChecked />
+        </Box>
 
-        {users.map((user) => (
-          <LeaderBoardRow user={user} key={user.name} />
+        {users.map((user, index) => (
+          <LeaderBoardRow user={user} key={user.name} rank={index + 1} />
         ))}
-      </main>
-
-      <style jsx>{`
-        .container {
-          margin-right: auto;
-          margin-left: auto;
-          max-width: 960px;
-          padding-right: 10px;
-          padding-left: 10px;
-        }
-
-        .sectionTitle {
-          font-size: 50px;
-          margin-bottom: 5px;
-        }
-
-        @media only screen and (max-width: 600px) {
-          .sectionTitle {
-            font-size: 35px;
-          }
-        }
-
-        a {
-          color: white !important;
-          text-decoration: none !important;
-        }
-      `}</style>
-    </div>
+      </Box>
+    </>
   );
 }
 
@@ -73,9 +63,7 @@ export async function getServerSideProps(context: {
     where: { name },
     select: {
       UserCustomLeaderboard: {
-        select: {
-          user: true,
-        },
+        select: { user: true },
       },
     },
   });

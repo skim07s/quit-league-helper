@@ -1,4 +1,8 @@
-import { Button, Link, Paper } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import Link from "next/link";
 import {
   CustomLeaderboard,
   User,
@@ -24,72 +28,51 @@ function LeaderboardSummary({ leaderboard }: Props) {
     }
   }
 
+  const members = leaderboard.UserCustomLeaderboard.map((i) => i.user.name).join(", ");
+
   return (
-    <Paper elevation={3}>
-      <div className="section">
-        <p className="name">{leaderboard.name}</p>
-        <p className="summonerNames">
-          Members:{" "}
-          {leaderboard.UserCustomLeaderboard.map((item, index) => {
-            if (index === leaderboard.UserCustomLeaderboard.length - 1) {
-              return item.user.name;
-            }
-            return item.user.name + ", ";
-          })}
-        </p>
-        <p className="currentLeader">
-          Current leader: <strong>{currentLeader?.name}</strong>. He/she has not
-          played league for <strong>{currentLeader?.currentStreak}</strong>{" "}
-          days.
-        </p>
-
-        <Link href={"/leaderboard/" + encodeURI(leaderboard.name)}>
-          <Button
-            color="inherit"
-            style={{ marginBottom: 0, marginTop: 10 }}
-            size="small"
-            variant="outlined"
-          >
-            View Leaderboard
-          </Button>
-        </Link>
-      </div>
-
-      <style jsx>{`
-        .section {
-          padding: 10px;
-          margin-bottom: 20px;
-          background-color: #2b2b2b;
-        }
-
-        .name {
-          font-size: 20px;
-          margin-top: 0;
-          margin-bottom: 2px;
-          font-weight: 400;
-        }
-
-        .streak {
-          font-size: 28px;
-          font-weight: 600;
-          margin-top: 0;
-          margin-bottom: 0;
-        }
-
-        .summonerNames {
-          margin: 0;
-          padding: 0;
-          color: #b1afaf;
-          margin-top: 3px;
-        }
-
-        .currentLeader {
-          margin: 0;
-          padding: 0;
-          margin-top: 5px;
-          color: #b1afaf;
-        }
-      `}</style>
+    <Paper
+      elevation={0}
+      sx={{
+        mb: 2,
+        p: 2.5,
+        transition: "border-color 0.2s, transform 0.2s",
+        "&:hover": {
+          borderColor: "rgba(255,255,255,0.14)",
+          transform: "translateY(-1px)",
+        },
+      }}
+    >
+      <Typography sx={{ fontWeight: 700, fontSize: "1.05rem", mb: 0.5 }}>
+        {leaderboard.name}
+      </Typography>
+      <Typography sx={{ fontSize: "0.82rem", color: "text.secondary", mb: 0.5 }}>
+        {members}
+      </Typography>
+      {currentLeader && (
+        <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 1.5 }}>
+          Leading:{" "}
+          <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>
+            {currentLeader.name}
+          </Box>{" "}
+          — {currentLeader.currentStreak}d without League
+        </Typography>
+      )}
+      <Link href={"/leaderboard/" + encodeURI(leaderboard.name)} passHref legacyBehavior>
+        <Button
+          component="a"
+          size="small"
+          variant="outlined"
+          sx={{
+            borderColor: "rgba(255,255,255,0.15)",
+            color: "text.secondary",
+            fontSize: "0.78rem",
+            "&:hover": { borderColor: "rgba(255,255,255,0.35)", color: "text.primary" },
+          }}
+        >
+          View leaderboard →
+        </Button>
+      </Link>
     </Paper>
   );
 }

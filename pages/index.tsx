@@ -1,5 +1,7 @@
 import Head from "next/head";
 import { useState } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
@@ -9,9 +11,7 @@ const Home = () => {
   const [name, setName] = useState("");
   const [summonerNames, setSummonerNames] = useState([""]);
   const [isLoading, setIsLoading] = useState(false);
-  const [invalidSummonerNames, setInvalidSummonerNames] = useState<string[]>(
-    []
-  );
+  const [invalidSummonerNames, setInvalidSummonerNames] = useState<string[]>([]);
 
   const handleSummonerNameChange = (i: number, summonerName: string) => {
     const newSummonerNames = [...summonerNames];
@@ -45,144 +45,121 @@ const Home = () => {
     } catch (error) {
       console.error(error);
     }
-
     setIsLoading(false);
   };
 
   return (
-    <div className="container">
+    <>
       <Head>
         <title>Quit League</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main>
-        <h1>Want to take a break from</h1>
-        <h1 className="LoL">League of Legends?</h1>
-        <h2>
-          We can help you. Fill out the form below and we will keep track of
-          your streak automatically.
-        </h2>
-        <h3>
-          Afterwards you can create custom leaderboards to compete with your
-          friends for the longest streak.
-        </h3>
+      <Box
+        sx={{
+          maxWidth: 640,
+          mx: "auto",
+          px: { xs: 2, sm: 3 },
+          pt: { xs: 6, sm: 10 },
+          pb: 8,
+        }}
+      >
+        {/* Hero */}
+        <Typography
+          sx={{
+            fontSize: { xs: "2.2rem", sm: "3rem" },
+            fontWeight: 400,
+            lineHeight: 1.15,
+            letterSpacing: "-0.03em",
+            mb: 0,
+            color: "text.secondary",
+          }}
+        >
+          Want to take a break from
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: { xs: "2.8rem", sm: "4rem" },
+            fontWeight: 800,
+            lineHeight: 1.05,
+            letterSpacing: "-0.04em",
+            mb: 3,
+            background: "linear-gradient(135deg, #ec407a 0%, #f48fb1 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          League of Legends?
+        </Typography>
 
-        <TextField
-          label="Your Name"
-          variant="outlined"
-          fullWidth
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <Typography sx={{ color: "text.secondary", mb: 0.5, fontSize: "1rem" }}>
+          Fill out the form below and we&apos;ll track your streak automatically.
+        </Typography>
+        <Typography sx={{ color: "text.secondary", mb: 4, fontSize: "0.9rem" }}>
+          Then create custom leaderboards to compete with friends.
+        </Typography>
 
-        {summonerNames.map((summonerName, i) => (
+        {/* Form */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
-            key={i}
-            label="Summoner Name"
+            label="Your name"
             variant="outlined"
             fullWidth
-            style={{ marginTop: 20 }}
-            value={summonerName}
-            onChange={(e) => handleSummonerNameChange(i, e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
-        ))}
 
-        <Button
-          color="primary"
-          onClick={handleAddAccount}
-          style={{ marginBottom: 0 }}
-        >
-          Add another account
-        </Button>
+          {summonerNames.map((summonerName, i) => (
+            <TextField
+              key={i}
+              label={`Summoner name${summonerNames.length > 1 ? ` ${i + 1}` : ""}`}
+              variant="outlined"
+              fullWidth
+              value={summonerName}
+              onChange={(e) => handleSummonerNameChange(i, e.target.value)}
+            />
+          ))}
 
-        <p style={{ color: "#797272", marginTop: 8, paddingTop: 0 }}>
-          Be sure to include all your accounts.
-        </p>
+          <Box>
+            <Button
+              color="primary"
+              onClick={handleAddAccount}
+              size="small"
+              sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
+            >
+              + Add another account
+            </Button>
+            <Typography sx={{ fontSize: "0.78rem", color: "text.secondary", mt: 0.5, ml: 0.5 }}>
+              Be sure to include all your accounts.
+            </Typography>
+          </Box>
 
-        {invalidSummonerNames.length > 0 && (
-          <Alert severity="error">
-            <AlertTitle>Invalid Summoner Names</AlertTitle>
-            {invalidSummonerNames.map((n) => (
-              <p key={n}>{n}</p>
-            ))}
-          </Alert>
-        )}
+          {invalidSummonerNames.length > 0 && (
+            <Alert severity="error">
+              <AlertTitle>Invalid summoner names</AlertTitle>
+              {invalidSummonerNames.map((n) => (
+                <Box key={n}>{n}</Box>
+              ))}
+            </Alert>
+          )}
 
-        <Button
-          variant="contained"
-          color="primary"
-          size="large"
-          style={{ marginTop: 15 }}
-          onClick={handleSignupPress}
-          disabled={
-            summonerNames.filter((x) => x.trim() !== "").length === 0 ||
-            name === ""
-          }
-        >
-          {isLoading ? "Loading..." : "Take a break"}
-        </Button>
-      </main>
-
-      <style jsx>{`
-        .container {
-          margin-right: auto;
-          margin-left: auto;
-          max-width: 960px;
-          padding-right: 10px;
-          padding-left: 10px;
-        }
-
-        h1 {
-          font-size: 50px;
-          margin-bottom: 0;
-          padding-bottom: 0;
-          font-weight: 400;
-        }
-
-        .LoL {
-          font-size: 70px;
-          margin-top: 0;
-          padding-top: 0;
-          margin-bottom: 40px;
-          font-weight: 600;
-        }
-
-        h2 {
-          font-size: 20px;
-        }
-
-        @media only screen and (max-width: 600px) {
-          h1 {
-            font-size: 30px;
-          }
-          .LoL {
-            font-size: 40px;
-          }
-        }
-
-        a {
-          color: white;
-          text-decoration: none !important;
-        }
-      `}</style>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          background-color: rgba(0, 0, 0, 1) !important;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-            sans-serif;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
-    </div>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={handleSignupPress}
+            disabled={
+              summonerNames.filter((x) => x.trim() !== "").length === 0 ||
+              name === ""
+            }
+            sx={{ mt: 1, py: 1.5, fontSize: "1rem" }}
+          >
+            {isLoading ? "Loading…" : "Take a break"}
+          </Button>
+        </Box>
+      </Box>
+    </>
   );
 };
 

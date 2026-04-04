@@ -6,92 +6,108 @@ import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Button, Link } from "@mui/material";
+import { Button, Link, Typography } from "@mui/material";
 
 export default function PrimaryAppBar() {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     React.useState<null | HTMLElement>(null);
 
-  const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setMobileMoreAnchorEl(null);
-  };
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
-  const menuId = "primary-search-account-menu";
-  const renderMenu = (
-    <Menu
-      anchorEl={anchorEl}
-      anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      id={menuId}
-      keepMounted
-      transformOrigin={{ vertical: "top", horizontal: "right" }}
-      open={isMenuOpen}
-      onClose={handleMenuClose}
-    >
-      <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
-    </Menu>
-  );
+  const handleMobileMenuClose = () => {
+    setMobileMoreAnchorEl(null);
+  };
 
-  const mobileMenuId = "primary-search-account-menu-mobile";
+  const navLinks = [
+    { href: "/", label: "Sign up" },
+    { href: "/global-leaderboard", label: "Global Leaderboard" },
+    { href: "/leaderboards", label: "Leaderboards" },
+  ];
+
+  const mobileMenuId = "primary-menu-mobile";
   const renderMobileMenu = (
     <Menu
       anchorEl={mobileMoreAnchorEl}
-      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       id={mobileMenuId}
       keepMounted
       transformOrigin={{ vertical: "top", horizontal: "right" }}
       open={isMobileMenuOpen}
-      onClose={handleMenuClose}
+      onClose={handleMobileMenuClose}
+      slotProps={{
+        paper: {
+          sx: {
+            mt: 0.5,
+            minWidth: 200,
+            border: "1px solid rgba(255,255,255,0.1)",
+          },
+        },
+      }}
     >
-      <MenuItem>
-        <Link href="/" color="inherit" underline="none">
-          Signup
-        </Link>
-      </MenuItem>
-      <MenuItem>
-        <Link href="/global-leaderboard" color="inherit" underline="none">
-          Global Leaderboard
-        </Link>
-      </MenuItem>
-      <MenuItem>
-        <Link href="/leaderboards" color="inherit" underline="none">
-          Leaderboards
-        </Link>
-      </MenuItem>
+      {navLinks.map((link) => (
+        <MenuItem
+          key={link.href}
+          onClick={handleMobileMenuClose}
+          component="a"
+          href={link.href}
+          sx={{ fontSize: "0.9rem", py: 1.5 }}
+        >
+          {link.label}
+        </MenuItem>
+      ))}
     </Menu>
   );
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" color="transparent">
-        <Toolbar>
-          <Box sx={{ display: { xs: "none", md: "flex" } }}>
-            <Button href="/" color="inherit">
-              Sign up
-            </Button>
-            <Button href="/global-leaderboard" color="inherit">
-              Global Leaderboard
-            </Button>
-            <Button href="/leaderboards" color="inherit">
-              Leaderboards
-            </Button>
+      <AppBar position="sticky">
+        <Toolbar sx={{ gap: 1 }}>
+          {/* Brand */}
+          <Typography
+            component="a"
+            href="/"
+            sx={{
+              fontWeight: 700,
+              fontSize: "1.1rem",
+              color: "primary.main",
+              textDecoration: "none",
+              letterSpacing: "-0.02em",
+              mr: 2,
+            }}
+          >
+            Quit League
+          </Typography>
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Desktop nav */}
+          <Box sx={{ display: { xs: "none", md: "flex" }, gap: 0.5 }}>
+            {navLinks.map((link) => (
+              <Button
+                key={link.href}
+                href={link.href}
+                sx={{
+                  color: "text.secondary",
+                  "&:hover": { color: "text.primary", bgcolor: "rgba(255,255,255,0.06)" },
+                }}
+              >
+                {link.label}
+              </Button>
+            ))}
           </Box>
+
+          {/* Mobile menu button */}
           <Box sx={{ display: { xs: "flex", md: "none" } }}>
             <IconButton
-              aria-label="show more"
+              aria-label="open menu"
               aria-controls={mobileMenuId}
               aria-haspopup="true"
               onClick={handleMobileMenuOpen}
-              color="inherit"
+              sx={{ color: "text.secondary" }}
             >
               <MenuIcon />
             </IconButton>
@@ -99,7 +115,6 @@ export default function PrimaryAppBar() {
         </Toolbar>
       </AppBar>
       {renderMobileMenu}
-      {renderMenu}
     </Box>
   );
 }
