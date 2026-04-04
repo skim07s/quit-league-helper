@@ -113,7 +113,7 @@ const Home = () => {
           {summonerNames.map((summonerName, i) => (
             <TextField
               key={i}
-              label={`Summoner name${summonerNames.length > 1 ? ` ${i + 1}` : ""}`}
+              label={`Riot ID${summonerNames.length > 1 ? ` ${i + 1}` : ""} (e.g. username#NA1)`}
               variant="outlined"
               fullWidth
               value={summonerName}

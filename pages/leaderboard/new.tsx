@@ -81,7 +81,7 @@ function BuildCustomLeaderboard() {
         {summonerNames.map((summonerName, i) => (
           <TextField
             key={i}
-            label="Users summoner name"
+            label="Riot ID (e.g. username#NA1)"
             variant="outlined"
             value={summonerName}
             onChange={(e) => handleSummonerNameChange(i, e.target.value)}

@@ -31,10 +31,16 @@ export default async function handler(
   const invalidSummonerNames: string[] = [];
 
   for (const summonerName of summonerNames) {
+    const hashIndex = summonerName.indexOf("#");
+    if (hashIndex === -1) {
+      invalidSummonerNames.push(summonerName);
+      continue;
+    }
+    const gameName = summonerName.slice(0, hashIndex);
+    const tagLine = summonerName.slice(hashIndex + 1);
     try {
       const response = await fetch(
-        "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" +
-          encodeURIComponent(summonerName),
+        `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
         {
           headers: { "X-Riot-Token": LEAGUE_API_KEY ?? "" },
           signal: AbortSignal.timeout(5000),
@@ -43,15 +49,10 @@ export default async function handler(
       if (response.status === 404) {
         invalidSummonerNames.push(summonerName);
       } else if (!response.ok) {
-        console.log(
-          "[ERROR] could not validate summoner name because of API error"
-        );
+        console.log("[ERROR] could not validate Riot ID — API error", response.status);
       }
     } catch (error) {
-      console.log(
-        "[ERROR] could not reach Riot API to validate summoner name",
-        error
-      );
+      console.log("[ERROR] could not reach Riot API to validate Riot ID", error);
     }
   }
 
