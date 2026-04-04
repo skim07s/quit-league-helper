@@ -8,6 +8,7 @@ import MatchHistoryLastChecked from "../components/matchhistoryLastChecked";
 
 const Admin = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [isError, setIsError] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -27,6 +28,12 @@ const Admin = () => {
     setIsLoading(false);
   };
 
+  const resetCheckTimes = async () => {
+    setIsResetting(true);
+    await fetch("/api/reset-check-times");
+    setIsResetting(false);
+  };
+
   return (
     <>
       <Head>
@@ -43,15 +50,31 @@ const Admin = () => {
           <MatchHistoryLastChecked key={refreshKey} />
         </Box>
 
-        <Button
-          onClick={checkMatchHistory}
-          color="primary"
-          variant="contained"
-          disabled={isLoading}
-          sx={{ py: 1.2, px: 3 }}
-        >
-          {isLoading ? "Checking…" : "Check match history"}
-        </Button>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <Button
+            onClick={checkMatchHistory}
+            color="primary"
+            variant="contained"
+            disabled={isLoading}
+            sx={{ py: 1.2, px: 3 }}
+          >
+            {isLoading ? "Checking…" : "Check match history"}
+          </Button>
+          <Button
+            onClick={resetCheckTimes}
+            variant="outlined"
+            disabled={isResetting}
+            sx={{
+              py: 1.2,
+              px: 3,
+              borderColor: "rgba(255,255,255,0.15)",
+              color: "text.secondary",
+              "&:hover": { borderColor: "rgba(255,255,255,0.3)", color: "text.primary" },
+            }}
+          >
+            {isResetting ? "Resetting…" : "Reset check times"}
+          </Button>
+        </Box>
 
         {isError && (
           <Alert severity="error" sx={{ mt: 2 }}>

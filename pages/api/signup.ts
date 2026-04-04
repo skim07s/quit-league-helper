@@ -66,6 +66,14 @@ export default async function handler(
       name: req.body.name,
       currentStreak: 0,
       summonerNames,
+      lastModifiedTime: new Date(0), // epoch so they're picked up by the next check
+      UserLeagueAccount: {
+        create: summonerNames.map((summonerName) => ({
+          LeagueAccount: {
+            create: { summonerName },
+          },
+        })),
+      },
     },
   });
 
