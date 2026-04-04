@@ -12,6 +12,7 @@ const Home = () => {
   const [summonerNames, setSummonerNames] = useState([""]);
   const [isLoading, setIsLoading] = useState(false);
   const [invalidSummonerNames, setInvalidSummonerNames] = useState<string[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSummonerNameChange = (i: number, summonerName: string) => {
     const newSummonerNames = [...summonerNames];
@@ -25,6 +26,7 @@ const Home = () => {
 
   const handleSignupPress = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     const summonerNamesToUse = summonerNames.filter((x) => x.trim() !== "");
     try {
       const response = await fetch("/api/signup", {
@@ -38,8 +40,12 @@ const Home = () => {
         if (data.invalidSummonerNames) {
           setInvalidSummonerNames(data.invalidSummonerNames);
         }
+        if (data.error) {
+          setErrorMessage(data.error);
+        }
       } else {
         setInvalidSummonerNames([]);
+        setErrorMessage(null);
         window.location.href = "/global-leaderboard";
       }
     } catch (error) {
@@ -135,9 +141,13 @@ const Home = () => {
             </Typography>
           </Box>
 
+          {errorMessage && !invalidSummonerNames.length && (
+            <Alert severity="error">{errorMessage}</Alert>
+          )}
+
           {invalidSummonerNames.length > 0 && (
             <Alert severity="error">
-              <AlertTitle>Invalid summoner names</AlertTitle>
+              <AlertTitle>{errorMessage ?? "Invalid Riot IDs"}</AlertTitle>
               {invalidSummonerNames.map((n) => (
                 <Box key={n}>{n}</Box>
               ))}

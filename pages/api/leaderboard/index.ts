@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../../lib/prisma";
+import { containsProfanity, findProfanity } from "../../../lib/profanity";
 
 export default async function handler(
   req: NextApiRequest,
@@ -23,6 +24,18 @@ export default async function handler(
   if (summonerNames.length === 0) {
     return res.status(400).json({
       error: "A valid list of summonerNames is required.",
+    });
+  }
+
+  // Profanity check
+  if (containsProfanity(req.body.name)) {
+    return res.status(400).json({ error: "Leaderboard name contains inappropriate content." });
+  }
+  const profaneNames = findProfanity(summonerNames);
+  if (profaneNames.length > 0) {
+    return res.status(400).json({
+      error: "Riot ID contains inappropriate content.",
+      summonerNamesNotFound: profaneNames,
     });
   }
 

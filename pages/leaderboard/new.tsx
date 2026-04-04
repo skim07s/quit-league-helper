@@ -9,14 +9,13 @@ function BuildCustomLeaderboard() {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [summonerNames, setSummonerNames] = useState(["", ""]);
-  const [summonerNamesNotFound, setSummonerNamesNotFound] = useState<string[]>(
-    []
-  );
-  const [shouldShowLeaderboardNameError, setShouldShowLeaderboardNameError] =
-    useState(false);
+  const [summonerNamesNotFound, setSummonerNamesNotFound] = useState<string[]>([]);
+  const [shouldShowLeaderboardNameError, setShouldShowLeaderboardNameError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleCreateButtonPress = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     const summonerNamesToUse = summonerNames.filter((x) => x.trim() !== "");
     try {
       const response = await fetch("/api/leaderboard", {
@@ -33,9 +32,13 @@ function BuildCustomLeaderboard() {
         if (data.summonerNamesNotFound) {
           setSummonerNamesNotFound(data.summonerNamesNotFound);
         }
+        if (data.error) {
+          setErrorMessage(data.error);
+        }
       } else {
         setSummonerNamesNotFound([]);
         setShouldShowLeaderboardNameError(false);
+        setErrorMessage(null);
         window.location.href = "/leaderboard/" + encodeURI(name);
       }
     } catch (error) {
@@ -96,10 +99,13 @@ function BuildCustomLeaderboard() {
         >
           Add another user
         </Button>
+        {errorMessage && !summonerNamesNotFound.length && !shouldShowLeaderboardNameError && (
+          <Alert severity="error">{errorMessage}</Alert>
+        )}
         {summonerNamesNotFound.length > 0 && (
-          <Alert severity="error" style={{ backgroundColor: "rgb(37 11 10)" }}>
+          <Alert severity="error">
             <AlertTitle>
-              Could not find users that signed up the following summoner names:
+              {errorMessage ?? "Could not find users with the following Riot IDs:"}
             </AlertTitle>
             {summonerNamesNotFound.map((n, i) => (
               <p key={i}>{n}</p>
@@ -107,7 +113,7 @@ function BuildCustomLeaderboard() {
           </Alert>
         )}
         {shouldShowLeaderboardNameError && (
-          <Alert severity="error" style={{ backgroundColor: "rgb(37 11 10)" }}>
+          <Alert severity="error">
             <AlertTitle>Leaderboard already exists with this name</AlertTitle>
           </Alert>
         )}
