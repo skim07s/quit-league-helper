@@ -7,7 +7,7 @@ A web app that automatically tracks how long you've gone without playing League 
 ## What it does
 
 Sign up with your name and Riot ID(s) and the app will check your match history every 12 hours via the Riot Games API. Your streak resets the day you play a game. You can link multiple accounts so smurfing doesn't save you.
-
+ 
 Once you're signed up you can create a named leaderboard, add your friends, and see who's holding out the longest.
 
 ![Global leaderboard](public/screenshots/leaderboard.png)
